@@ -4,13 +4,14 @@ import pyrebase
 
 
 config={  
-    apiKey: "AIzaSyDDt_BZP5_FE4v0WvFfxkvR9snMFKm9o_8",
-    authDomain: "firstone-e6dd6.firebaseapp.com",
-    projectId: "firstone-e6dd6",
-    storageBucket: "firstone-e6dd6.appspot.com",
-    messagingSenderId: "978481786131",
-    appId: "1:978481786131:web:a42460d9b38a6a3d787ee6",
-    measurementId: "G-JW3NXNX6B3"
+    'apiKey': "AIzaSyDDt_BZP5_FE4v0WvFfxkvR9snMFKm9o_8",
+    'authDomain': "firstone-e6dd6.firebaseapp.com",
+    'projectId': "firstone-e6dd6",
+    'storageBucket': "firstone-e6dd6.appspot.com",
+    'messagingSenderId': "978481786131",
+    'appId': "1:978481786131:web:a42460d9b38a6a3d787ee6",
+    'measurementId': "G-JW3NXNX6B3",
+    'databaseURL':""
     }
 firebase=pyrebase.initialize_app(config)
 auth=firebase.auth()
@@ -26,9 +27,9 @@ def signup():
        password = request.form['password']
        try:
             login_session['user'] = auth.create_user_with_email_and_password(email, password)
-           return redirect(url_for('home'))
+            return redirect(url_for("signup.html"))
        except:
-           error = "Authentication failed"
+            error = "Authentication failed"
    return render_template("signup.html")
 
 
@@ -59,7 +60,7 @@ def add_tweet():
 def signout():
     login_session['user'] = None
     auth.current_user = None
-    return redirect(url_for('signin'))
+    return redirect(url_for('signin.html'))
 
 if __name__ == '__main__':
     app.run(debug=True)
