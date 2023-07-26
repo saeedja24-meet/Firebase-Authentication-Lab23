@@ -21,6 +21,14 @@ gameAndImages={
     "GTA5":"https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png",
 
 }
+priceGame={
+    "darkSouls":60,
+    "cupHead":20,
+    "overWatch2":0,
+    "hearthstone":0,
+    "GTA5":17.35,
+}
+totalPrice=0
 users={"":""}
 firebase=pyrebase.initialize_app(config)
 auth=firebase.auth()
@@ -29,17 +37,17 @@ db=firebase.database()
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SECRET_KEY'] = 'super-secret-key'
 
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     error = ""
+    login_session['totalPrice'] = 0
     if request.method == 'POST':
        email = request.form['email']
        password = request.form['password']
        try:
             login_session['user'] = auth.create_user_with_email_and_password(email, password)
-            login_session['user']['name']=email[0:len(email)-10]
             UID = login_session['user']['localId']
-            users.update(login_session['user']['localId'])
             return redirect(url_for("store"))
        except Exception as e:
             print(e)
@@ -52,6 +60,7 @@ def signup():
 @app.route('/', methods=['GET', 'POST'])
 def signin():
     error = ""
+    login_session['totalPrice'] = 0
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -69,13 +78,46 @@ def signin():
 
 @app.route('/store', methods=['GET', 'POST'])
 def store():
-    return render_template("store.html",gameAndImagesHtml=gameAndImages)
+    return render_template("store.html",gameAndImagesHtml=gameAndImages,priceGameHtml=priceGame, totalPrice = login_session['totalPrice'])
 
 
 @app.route('/addGame/<string:name>')
 def addGame(name):
-    db.child("users").child(UID).child(games).push()
-    print(db.child("users").child(UID).child(games).push({{gameName}}))
+    if 'user' in login_session and 'localId' in login_session['user']:
+        UID = login_session['user']['localId']
+        game_data = {
+            'name': name,
+            'image_url': gameAndImages.get(name, '')
+        }
+        n=True
+        game = db.child("users").child("dG7CKjmxEwUm12CqJ5WqQFGYzbF2").child("games").get().val()
+        for r in game:
+            if game[r]==name:
+                n=False
+        if n:
+            db.child("users").child(UID).child("games").push(game_data)
+            login_session['totalPrice']=login_session['totalPrice']+priceGame[name]
+            return redirect(url_for("store"))
+    else:
+        return "User not logged in!"
+@app.route('/removeGame/<string:name>')
+def removeGame(name):
+    if 'user' in login_session and 'localId' in login_session['user']:
+        UID = login_session['user']['localId']
+        game_data = {
+            'name': name,
+            'image_url': gameAndImages.get(name, '')
+        }
+        n=True
+        game = db.child("users").child("dG7CKjmxEwUm12CqJ5WqQFGYzbF2").child("games").get().val()
+        for r in game:
+            if game[r]==name:
+                n=False
+        if n:
+            login_session['totalPrice']=login_session['totalPrice']-priceGame[name]
+            return redirect(url_for("store"))
+    else:
+        return "User not logged in!"
 @app.route('/signout')
 def signout():
     login_session['user'] = None
